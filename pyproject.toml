@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "magic-base"
+version = "0.1.0"
+description = "Magic 平台公共基类库 - 提供统一的抽象基类和核心接口"
+readme = "README.md"
+authors = [{name = "wxd123"}]
+license = "MIT"
+requires-python = ">=3.9"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "sqlalchemy>=2.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "black>=23.0",
+    "ruff>=0.1.0",
+    "mypy>=1.0",
+    "pyinitgen>=4.0.1",
+    "python-docstring-markdown>=0.2.2",
+]
+postgres = ["psycopg2-binary>=2.9.0"]
+mysql = ["pymysql>=1.0.0"]
+
+[project.urls]
+Homepage = "https://github.com/wxd123/magic-base"
+Repository = "https://github.com/wxd123/magic-base.git"
+
+[dependency-groups]
+dev = [
+    "build>=1.4.4",
+    "twine>=6.2.0",
+]

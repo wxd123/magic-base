@@ -1,0 +1,33 @@
+# 自动生成__init__.py
+uv add pyinitgen --dev
+
+# 查看自动生成文件
+pyinitgen --base-dir ./src/magic_base --dry-run
+
+# 生成
+pyinitgen --base-dir ./src/magic_base
+
+
+# 生成api接口文档
+
+# 工具安装
+uv add python_docstring_markdown --dev
+
+# 运行命令
+python -m python_docstring_markdown ./src/magic_base ./docs/api-base.md
+
+python -m python_docstring_markdown ./src/magic_base/data_access ./docs/api-base-data-access.md
+
+python -m python_docstring_markdown ./src/magic_base/detector ./docs/api-base-detector.md
+
+python -m python_docstring_markdown ./src/magic_base/platform ./docs/api-base-platform.md
+
+python -m python_docstring_markdown ./src/magic_base/exceptions ./docs/api-base-exceptions.md
+
+python -m python_docstring_markdown ./src/magic_base/types ./docs/api-base-types.md
+
+# 安装测试工具
+uv add pytest pytest-cov --dev
+
+# git 代理
+git config --global http.https://github.com.proxy http://127.0.0.1:7897
