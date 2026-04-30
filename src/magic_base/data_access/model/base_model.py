@@ -3,14 +3,14 @@
 ORM 基类 - 所有数据模型继承此基类
 """
 
-from abc import ABC
+
 from typing import Any, Dict, Optional, TypeVar
 
 
-T = TypeVar('T', bound='BaseModel')
+T = TypeVar('T', bound='MagicBaseModel')
 
 
-class BaseModel(ABC):
+class MagicBaseModel():
     """
     ORM 模型抽象基类
     
@@ -20,11 +20,11 @@ class BaseModel(ABC):
     Example:
         # 在 magicd 中：
         from sqlalchemy.ext.declarative import declarative_base
-        from magic_base.data_access.model import BaseModel
+        from magic_base.data_access.model import MagicBaseModel
         
         ORMBase = declarative_base()
         
-        class User(ORMBase, BaseModel):
+        class User(ORMBase, MagicBaseModel):
             __tablename__ = "users"
             id = Column(Integer, primary_key=True)
             name = Column(String)
