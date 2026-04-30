@@ -108,5 +108,4 @@ class MagicDatabaseManager(DatabaseManagerBase):
         if drop_first:
             self._base.metadata.drop_all(bind=self.engine)
         self._base.metadata.create_all(bind=self.engine)
-
     
