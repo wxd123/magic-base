@@ -3,7 +3,7 @@
 from typing import Dict, List, Optional, TypeVar, Generic, Type, Any, get_origin, get_args
 from sqlalchemy.orm import Session
 from magic_base.data_access.manager.base_database_manager import DatabaseManagerBase
-from .base_repository import BaseRepository
+
 
 T = TypeVar('T')
 
@@ -49,17 +49,15 @@ class RepositoryCoreMixin(Generic[T]):
             对于抽象基类（BaseRepository 和 RepositoryCoreMixin 本身），不进行提取，
             允许它们被正常实例化（虽然通常不会直接实例化）。
         """
-        if cls is BaseRepository or cls is RepositoryCoreMixin:
-            # 如果是抽象基类，允许实例化检查通过
-            return super().__new__(cls)
-        
         instance = super().__new__(cls)
-        
-        # 自动从子类的泛型参数提取模型类
-        instance._model_class = cls._extract_model_class()
-        
+        try:
+            instance._model_class = cls._extract_model_class()
+        except TypeError:
+            # 如果是抽象基类本身，不设置 _model_class
+            pass
         return instance
-    
+        
+       
     def __init__(self, session: Optional[Session] = None):
         """
         初始化 Repository 核心
@@ -115,22 +113,24 @@ class RepositoryCoreMixin(Generic[T]):
                 pass
             # UserRepository._extract_model_class() 返回 User 类
         """
-        # 检查 __orig_bases__（Python 3.8+）
+        # 方法1：检查当前类的直接基类
         if hasattr(cls, '__orig_bases__'):
             for base in cls.__orig_bases__:
-                origin = get_origin(base)
-                if origin is BaseRepository or origin is RepositoryCoreMixin:
-                    args = get_args(base)
-                    if args:
-                        return args[0]
-        
-        # 检查 __bases__（兼容处理）
-        for base in cls.__bases__:
-            if hasattr(base, '__origin__') and base.__origin__ in [BaseRepository, RepositoryCoreMixin]:
-                args = getattr(base, '__args__', [])
-                if args:
+                args = get_args(base)
+                if args and not isinstance(args[0], TypeVar):
+                    # 找到具体类型（不是 TypeVar），直接返回
                     return args[0]
         
+        # 方法2：如果当前类还有父类，递归查找
+        for base in cls.__bases__:
+            if base is not object and hasattr(base, '_extract_model_class'):
+                try:
+                    # 尝试从父类提取
+                    return base._extract_model_class()
+                except TypeError:
+                    continue  # 父类也没找到，继续找下一个父类
+        
+        # 实在找不到，抛出异常
         raise TypeError(
             f"{cls.__name__} 必须指定泛型类型。\n"
             f"正确用法：class {cls.__name__}(BaseRepository[UserModel]): pass"

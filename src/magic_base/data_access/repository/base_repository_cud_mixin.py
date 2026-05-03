@@ -2,7 +2,7 @@ from abc import ABC
 from typing import Dict, List, Optional, TypeVar, Generic, Type, Any, get_origin, get_args
 from sqlalchemy.orm import Session
 from sqlalchemy import inspect, text
-from .base_repository import RepositoryCoreMixin
+from .base_repository_core_mixin import RepositoryCoreMixin
 
 
 T = TypeVar('T')
