@@ -1,4 +1,5 @@
-from abc import ABC
+# magic_base/data_access/repository/base_repository_query_mixin.py
+
 from typing import Dict, List, Optional, TypeVar, Generic, Type, Any, get_origin, get_args
 from .base_repository_core_mixin import RepositoryCoreMixin
 from sqlalchemy import inspect, text

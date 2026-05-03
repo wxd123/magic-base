@@ -1,4 +1,5 @@
-# magicm_base/data_access/repository/base_repository.py
+# magicm_base/data_access/repository/base_repository_core_mixin.py
+
 
 from typing import Dict, List, Optional, TypeVar, Generic, Type, Any, get_origin, get_args
 from sqlalchemy.orm import Session
