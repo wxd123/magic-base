@@ -4,327 +4,246 @@ from abc import ABC
 from typing import Dict, List, Optional, TypeVar, Generic, Type, Any, get_origin, get_args
 from sqlalchemy.orm import Session
 from sqlalchemy import inspect, text
-from magic_base.data_access.manager.base_database_manager import MagicDatabaseManager, DatabaseManagerBase
+
+from .base_repository_cud_mixin import CUDRepositoryMixin
+from .base_repository_query_mixin import QueryRepositoryMixin
 
 
 T = TypeVar('T')
 
 
-class BaseRepository(Generic[T]):
+class BaseRepository(CUDRepositoryMixin[T], QueryRepositoryMixin[T]):
     """
     混合 Repository 基类（抽象基类，只能通过继承使用）
+    
+    组合 CUD 和 Query 两个 Mixin，提供完整的 CRUD 操作。
     
     - CUD (创建/更新/删除): 使用 ORM
     - R (查询): 使用原生 SQL
     
+    设计理念:
+        采用混合策略，发挥各自优势：
+        - 写操作使用 ORM：获得对象关系映射的便利性、自动事务管理、关联关系处理
+        - 读操作使用原生 SQL：获得更好的性能、更灵活的查询、复杂 JOIN 支持
+    
+    继承关系:
+        BaseRepository
+        ├── CUDRepositoryMixin (ORM 写操作)
+        │   └── RepositoryCoreMixin (核心基础设施)
+        └── QueryRepositoryMixin (SQL 读操作)
+            └── RepositoryCoreMixin (核心基础设施)
+    
     使用方式：
         class UserRepository(BaseRepository[User]):
+            '''用户数据仓库'''
             pass
         
-        repo = UserRepository(session)  # 或 UserRepository()
+        # 实例化
+        repo = UserRepository(session)  # 使用现有会话
+        repo = UserRepository()          # 自动获取会话
+        
+        # 执行操作
+        user = repo.create(name="Alice", email="alice@example.com")
+        user_dict = repo.get_by_id(user.id)
+        users = repo.find(conditions={'is_active': True})
+    
+    设计优势:
+        - 职责分离：核心、CUD、查询各司其职，代码清晰易维护
+        - 灵活组合：可以根据需要只继承部分 Mixin（如只读 Repository）
+        - 易于测试：每个 Mixin 可以独立测试，降低测试复杂度
+        - 代码复用：不同的 Repository 可以灵活组合不同的能力
+        - 类型安全：完整的泛型支持，IDE 可提供准确的代码补全
+    
+    注意事项:
+        1. 此类为抽象基类，不能直接实例化，必须通过子类继承
+        2. 子类必须指定泛型类型 T（具体的 ORM 模型类）
+        3. 泛型类型会在实例化时自动提取，无需手动设置
+    
+    示例:
+        # 定义模型
+        class User(Base):
+            __tablename__ = 'users'
+            id = Column(Integer, primary_key=True)
+            name = Column(String)
+            email = Column(String)
+        
+        # 定义 Repository
+        class UserRepository(BaseRepository[User]):
+            '''用户数据仓库'''
+            
+            def find_by_email(self, email: str) -> Optional[Dict]:
+                '''自定义查询方法'''
+                return self.find_one({'email': email})
+            
+            def activate_user(self, user_id: int) -> bool:
+                '''自定义业务方法'''
+                return self.update(user_id, is_active=True)
+        
+        # 使用 Repository
+        repo = UserRepository()
+        
+        # 继承的基础方法
+        user = repo.create(name="Bob", email="bob@example.com")
+        user_dict = repo.get_by_id(user.id)
+        
+        # 自定义方法
+        user = repo.find_by_email("bob@example.com")
+        repo.activate_user(user['id'])
     """
     
     def __new__(cls, *args, **kwargs):
-        """在子类实例化时自动提取泛型类型"""
+        """在子类实例化时自动提取泛型类型
+        
+        拦截实例创建过程，确保抽象基类不能被直接实例化，
+        同时允许子类正常实例化。
+        
+        执行流程:
+            1. 检查当前类是否为 BaseRepository 本身
+            2. 如果是，抛出 TypeError 禁止实例化
+            3. 如果不是（说明是子类），正常创建实例
+        
+        参数:
+            *args: 位置参数
+            **kwargs: 关键字参数
+        
+        返回:
+            子类实例
+        
+        异常:
+            TypeError: 当尝试直接实例化 BaseRepository 时抛出
+        
+        示例:
+            # 错误用法 - 会抛出 TypeError
+            repo = BaseRepository()
+            
+            # 正确用法
+            repo = UserRepository()
+        
+        注意:
+            此方法只检查直接实例化 BaseRepository 的情况，
+            子类实例化时会正常通过检查。
+        """
         if cls is BaseRepository:
             raise TypeError(f"抽象基类 {cls.__name__} 不能直接实例化，请使用子类继承")
         
         instance = super().__new__(cls)
-        
-        # 自动从子类的泛型参数提取模型类
-        instance._model_class = cls._extract_model_class()
-        
         return instance
     
     def __init__(self, session: Optional[Session] = None):
-        """
-        Args:
+        """初始化 Repository
+        
+        调用父类（CUDRepositoryMixin 和 QueryRepositoryMixin）的初始化方法，
+        设置数据库会话、模型类、表名等核心属性。
+        
+        参数:
             session: 数据库会话（可选，如果不提供则自动从 db_connection 获取）
+        
+        示例:
+            # 使用自动会话管理
+            repo = UserRepository()
+            
+            # 使用自定义会话
+            from sqlalchemy.orm import Session
+            session = Session(engine)
+            repo = UserRepository(session)
+        
+        注意:
+            session 采用延迟初始化策略，只有在首次使用时才会获取，
+            这样可以避免在 Repository 创建时就依赖数据库连接。
         """
-        if not hasattr(self, '_model_class') or self._model_class is None:
-            raise RuntimeError(
-                f"{self.__class__.__name__} 未正确初始化模型类。\n"
-                f"请确保继承时指定泛型：class {self.__class__.__name__}(BaseRepository[UserModel]): pass"
-            )
-        
-        # 设置 session
-        if session is not None:
-            self._session = session
-        else:
-            self._session = None  # 延迟初始化，使用时再获取
-        
-        # 获取表名
-        self._table_name = self._get_table_name_from_model(self._model_class)
-    
-    @classmethod
-    def _extract_model_class(cls) -> Type[T]:
-        """从泛型参数提取模型类"""
-        # 检查 __orig_bases__（Python 3.8+）
-        if hasattr(cls, '__orig_bases__'):
-            for base in cls.__orig_bases__:
-                origin = get_origin(base)
-                if origin is BaseRepository:
-                    args = get_args(base)
-                    if args:
-                        return args[0]
-        
-        # 检查 __bases__（兼容处理）
-        for base in cls.__bases__:
-            if hasattr(base, '__origin__') and base.__origin__ is BaseRepository:
-                args = getattr(base, '__args__', [])
-                if args:
-                    return args[0]
-        
-        raise TypeError(
-            f"{cls.__name__} 必须指定泛型类型。\n"
-            f"正确用法：class {cls.__name__}(BaseRepository[UserModel]): pass"
-        )
-    
-    def _get_session(self) -> Session:
-        """获取数据库会话（延迟初始化）"""
-        if self._session is None:
-            self._session = DatabaseManagerBase.session()
-        return self._session
-    
-    @property
-    def session(self) -> Session:
-        """获取数据库会话"""
-        return self._get_session()
-    
-    @property
-    def model_class(self) -> Type[T]:
-        """获取模型类"""
-        return self._model_class
-    
-    @property
-    def table_name(self) -> str:
-        """获取表名"""
-        return self._table_name
-    
-    def _get_table_name_from_model(self, model_class: Type[T]) -> str:
-        """从模型类自动获取表名"""
-        # 获取表名的多种方式
-        if hasattr(model_class, '__tablename__'):
-            return model_class.__tablename__
-        
-        if hasattr(model_class, '__table__') and model_class.__table__ is not None:
-            return model_class.__table__.name
-        
-        # 降级方案：从类名转换
-        import re
-        class_name = model_class.__name__
-        snake_name = re.sub('(?<!^)(?=[A-Z])', '_', class_name).lower()
-        if not snake_name.endswith('s'):
-            snake_name += 's'
-        return snake_name
-    
-    # ==================== ORM 部分 (CUD) ====================
-    
-    def create(self, **kwargs) -> T:
-        """创建记录（ORM）"""
-        with self._get_session() as session:
-            instance = self._model_class(**kwargs)
-            session.add(instance)
-            session.flush()
-            session.refresh(instance)  # 刷新获取自增 ID
-            return instance
-    
-    def create_from_model(self, model: T) -> T:
-        """从模型对象创建（ORM）"""
-        with self._get_session() as session:
-            session.add(model)
-            session.flush()
-            session.refresh(model)
-            return model
-    
-    def update(self, record_id: int, **kwargs) -> bool:
-        """更新记录（ORM）"""
-        with self._get_session() as session:
-            instance = session.query(self._model_class).get(record_id)
-            if not instance:
-                return False
-            
-            for key, value in kwargs.items():
-                if hasattr(instance, key):
-                    setattr(instance, key, value)
-            
-            session.flush()
-            return True
-    
-    def update_from_model(self, model: T) -> bool:
-        """从模型对象更新（ORM）"""
-        with self._get_session() as session:
-            session.merge(model)
-            session.flush()
-            return True
-    
-    def delete(self, record_id: int, soft: bool = True, active_field: str = 'is_active') -> bool:
-        """删除记录（ORM）"""
-        with self._get_session() as session:
-            instance = session.query(self._model_class).get(record_id)
-            if not instance:
-                return False
-            
-            if soft:
-                if hasattr(instance, active_field):
-                    setattr(instance, active_field, False)
-                else:
-                    raise ValueError(f"模型缺少 {active_field} 字段")
-            else:
-                session.delete(instance)
-            
-            session.flush()
-            return True
-    
-    def batch_create(self, models: List[T]) -> List[T]:
-        """批量创建（ORM）"""
-        with self._get_session() as session:
-            session.bulk_save_objects(models)
-            session.flush()
-            session.commit()
-            return models
-    
-    def batch_update(self, updates: Dict[int, Dict[str, Any]]) -> int:
-        """批量更新（ORM）"""
-        updated = 0
-        with self._get_session() as session:
-            for record_id, fields in updates.items():
-                instance = session.query(self._model_class).get(record_id)
-                if instance:
-                    for key, value in fields.items():
-                        if hasattr(instance, key):
-                            setattr(instance, key, value)
-                    updated += 1
-            session.flush()
-        return updated
-    
-    def get_orm_instance(self, record_id: int) -> Optional[T]:
-        """获取 ORM 实例"""
-        with self._get_session() as session:
-            return session.query(self._model_class).get(record_id)
-    
-    # ==================== SQL 部分 (R - 查询) ====================
-    
-    def fetch_one(self, sql: str, params: Optional[Dict[str, Any]] = None) -> Optional[Dict]:
-        """查询单条记录"""
-        with self._get_session() as session:
-            result = session.execute(text(sql), params or {})
-            row = result.first()
-            if row:
-                return dict(row._mapping)
-            return None
-    
-    def fetch_all(self, sql: str, params: Optional[Dict[str, Any]] = None) -> List[Dict]:
-        """查询多条记录"""
-        with self._get_session() as session:
-            result = session.execute(text(sql), params or {})
-            rows = result.fetchall()
-            return [dict(row._mapping) for row in rows]
-    
-    def get_by_id(self, record_id: int) -> Optional[Dict]:
-        """根据 ID 查询（SQL）"""
-        return self.fetch_one(
-            f"SELECT * FROM {self._table_name} WHERE id = :id",
-            {'id': record_id}
-        )
-    
-    def get_all(self, filters: Optional[Dict[str, Any]] = None,
-                order_by: Optional[str] = None,
-                limit: Optional[int] = None) -> List[Dict]:
-        """查询所有记录（SQL）"""
-        sql = f"SELECT * FROM {self._table_name} WHERE 1=1"
-        params = {}
-        
-        if filters:
-            for key, value in filters.items():
-                if value is not None:
-                    sql += f" AND {key} = :{key}"
-                    params[key] = value
-        
-        if order_by:
-            sql += f" ORDER BY {order_by}"
-        if limit:
-            sql += " LIMIT :limit"
-            params['limit'] = limit
-        
-        return self.fetch_all(sql, params)
-    
-    def find(self, conditions: Optional[Dict[str, Any]] = None,
-             order_by: Optional[str] = None,
-             limit: Optional[int] = None,
-             offset: Optional[int] = None) -> List[Dict]:
-        """动态查询（SQL）"""
-        where_parts = []
-        params = {}
-        
-        if conditions:
-            for key, value in conditions.items():
-                if value is not None:
-                    where_parts.append(f"{key} = :{key}")
-                    params[key] = value
-        
-        where_clause = " AND ".join(where_parts) if where_parts else "1=1"
-        sql = f"SELECT * FROM {self._table_name} WHERE {where_clause}"
-        
-        if order_by:
-            sql += f" ORDER BY {order_by}"
-        if limit:
-            sql += " LIMIT :limit"
-            params['limit'] = limit
-        if offset:
-            sql += " OFFSET :offset"
-            params['offset'] = offset
-        
-        return self.fetch_all(sql, params)
-    
-    def find_one(self, conditions: Dict[str, Any]) -> Optional[Dict]:
-        """查询单条记录（SQL）"""
-        results = self.find(conditions, limit=1)
-        return results[0] if results else None
-    
-    def exists(self, **conditions) -> bool:
-        """检查是否存在（SQL）"""
-        result = self.find_one(conditions)
-        return result is not None
-    
-    def count(self, filters: Optional[Dict[str, Any]] = None) -> int:
-        """统计数量（SQL）"""
-        sql = f"SELECT COUNT(*) as total FROM {self._table_name} WHERE 1=1"
-        params = {}
-        
-        if filters:
-            for key, value in filters.items():
-                if value is not None:
-                    sql += f" AND {key} = :{key}"
-                    params[key] = value
-        
-        result = self.fetch_one(sql, params)
-        return result['total'] if result else 0
-    
-    def paginate(self, page: int = 1, per_page: int = 20,
-                 conditions: Optional[Dict[str, Any]] = None,
-                 order_by: str = "id DESC") -> Dict[str, Any]:
-        """分页查询（SQL）"""
-        offset = (page - 1) * per_page
-        
-        items = self.find(
-            conditions=conditions,
-            order_by=order_by,
-            limit=per_page,
-            offset=offset
-        )
-        
-        total = self.count(conditions)
-        
-        return {
-            'items': items,
-            'total': total,
-            'page': page,
-            'per_page': per_page,
-            'pages': (total + per_page - 1) // per_page if total else 0,
-            'has_next': page * per_page < total,
-            'has_prev': page > 1
-        }
+        super().__init__(session)
 
-class MagicBaseRepository(ABC, BaseRepository[Generic[T]]):
+
+class MagicBaseRepository(ABC, BaseRepository[T]):
+    """
+    Magic 系列基础 Repository 适配类
+    
+    继承自 ABC（抽象基类）和 BaseRepository，为 Magic 系列项目提供统一的 Repository 基类。
+    
+    设计目的:
+        为 Magic 生态系统中的各个项目提供一致的 Repository 接口，
+        便于代码复用和统一管理。
+    
+    多重继承说明:
+        - ABC: 来自 abc 模块的抽象基类，确保此类不能被直接实例化
+        - BaseRepository: 提供完整的 CRUD 操作能力
+    
+    使用方式:
+        from magic_base.data_access.repository import MagicBaseRepository
+        
+        # 基础用法
+        class UserRepository(MagicBaseRepository[User]):
+            '''用户数据仓库'''
+            pass
+        
+        # 可以添加自定义方法
+        class ProductRepository(MagicBaseRepository[Product]):
+            '''产品数据仓库'''
+            
+            def find_by_category(self, category_id: int) -> List[Dict]:
+                '''根据分类查找产品'''
+                return self.find(conditions={'category_id': category_id})
+            
+            def find_active_products(self) -> List[Dict]:
+                '''查找激活的产品'''
+                return self.find(conditions={'is_active': True})
+        
+        # 只读 Repository（不需要 CUD 操作）
+        class ReadOnlyRepository(QueryRepositoryMixin[ReadOnlyModel]):
+            '''只读 Repository，没有 CUD 操作'''
+            def find_by_name(self, name: str) -> Optional[Dict]:
+                return self.find_one({'name': name})
+    
+    与 BaseRepository 的区别:
+        - MagicBaseRepository 添加了 ABC 抽象标记
+        - MagicBaseRepository 是 Magic 生态的统一接口
+        - BaseRepository 是更通用的实现
+    
+    注意:
+        此类为抽象基类，通过 ABC 确保不能被直接实例化。
+        必须通过子类继承并实例化子类。
+    
+    示例:
+        # 定义模型
+        from magic_base.data_access.model import MagicBaseModel
+        
+        class User(MagicBaseModel):
+            __tablename__ = 'magic_users'
+            username = Column(String(50), unique=True)
+            email = Column(String(100), unique=True)
+        
+        # 定义 Repository
+        class UserRepository(MagicBaseRepository[User]):
+            '''Magic 用户仓库'''
+            
+            def find_by_username(self, username: str) -> Optional[Dict]:
+                '''根据用户名查找用户'''
+                return self.find_one({'username': username})
+            
+            def exists_by_email(self, email: str) -> bool:
+                '''检查邮箱是否存在'''
+                return self.exists(email=email)
+        
+        # 使用
+        repo = UserRepository()
+        
+        # 创建用户
+        user = repo.create(
+            username='alice',
+            email='alice@magic.com',
+            is_active=True
+        )
+        
+        # 查询用户
+        user_dict = repo.find_by_username('alice')
+        print(f"找到用户: {user_dict['email']}")
+        
+        # 检查存在性
+        if repo.exists_by_email('new@magic.com'):
+            print("邮箱已被注册")
+    
+    扩展建议:
+        可以根据项目需求，在 MagicBaseRepository 基础上添加更多通用方法，
+        如批量导入、导出、缓存等。
+    """
     pass
