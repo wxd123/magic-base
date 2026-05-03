@@ -6,10 +6,12 @@ from magic_base.data_access.manager.base_database_manager import DatabaseManager
 from magic_base.data_access.model.base_model import Base, BaseModel, MagicBaseModel
 from magic_base.data_access.repository.base_repository import BaseRepository
 from magic_base.data_access.service.base_service import BaseService
+from magic_base.context.application_context import ApplicationContext
 
-__all__ = ['ConfigBase', 
-           'DatabaseConfigBase', 'MagicDatabaseConfig',
-           'DatabaseManagerBase', 'MagicDatabaseManager'
-           'Base', 'BaseModel', 'MagicBaseModel', 
-           'BaseRepository', 
-           'BaseService']
+__all__ = [
+    'ApplicationContext', 
+    'ConfigBase', 'DatabaseConfigBase', 'MagicDatabaseConfig',
+    'DatabaseManagerBase', 'MagicDatabaseManager'
+    'Base', 'BaseModel', 'MagicBaseModel', 
+    'BaseRepository','BaseService'
+          ]

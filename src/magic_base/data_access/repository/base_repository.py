@@ -327,3 +327,4 @@ class BaseRepository(Generic[T]):
         }
 
 class MagicBaseRepository(ABC, BaseRepository[Generic[T]]):
+    pass
