@@ -3,7 +3,7 @@
 
 from typing import Dict, List, Optional, TypeVar, Generic, Type, Any, get_origin, get_args
 from sqlalchemy.orm import Session
-from magic_base.data_access.manager.base_database_manager import DatabaseManagerBase
+from magic_base.context.application_context import ApplicationContext
 
 
 T = TypeVar('T')
@@ -147,7 +147,7 @@ class RepositoryCoreMixin(Generic[T]):
             Session: 数据库会话对象
         """
         if self._session is None:
-            self._session = DatabaseManagerBase.session()
+            self._session = ApplicationContext.get_db_manager().session()
         return self._session
     
     @property

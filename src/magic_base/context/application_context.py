@@ -94,7 +94,20 @@ class ApplicationContext(Generic[ContextType]):
                 cls.db_manager = db_manager
             if context is not None:
                 cls.context = context
-    
+
+        #   cls._create_tables_if_not_exists()
+
+    @classmethod
+    def _create_tables_if_not_exists(cls):
+        """自动创建所有定义的表"""
+        try:
+            from magic_base import Base
+            engine = cls.db_manager.engine
+            Base.metadata.create_all(engine)  # 幂等操作，表已存在时不会重复创建
+            print("✅ 数据库表结构已就绪")
+        except Exception as e:
+            print(f"⚠️ 建表失败（不影响核心功能）: {e}")
+
     @classmethod
     def get_db_manager(cls) -> DatabaseManagerBase:
         """获取数据库管理器实例

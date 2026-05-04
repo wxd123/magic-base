@@ -72,6 +72,9 @@ class DatabaseManagerBase(ABC):
             Engine: SQLAlchemy 数据库引擎对象
         """
         if self._engine is None:
+            print(f"\n🔧 创建数据库引擎...")
+            print(f"   - 连接字符串: {self._config.get_connection_string()}")
+            print(f"   - 引擎选项: {self._config.get_engine_options()}")
             self._engine = create_engine(
                 self._config.get_connection_string(),
                 **self._config.get_engine_options()
