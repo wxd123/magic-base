@@ -1060,6 +1060,7 @@ postgres = [
 [package.dev-dependencies]
 dev = [
     { name = "build" },
+    { name = "magic-base" },
     { name = "twine" },
 ]
 
@@ -1081,6 +1082,7 @@ provides-extras = ["dev", "postgres", "mysql"]
 [package.metadata.requires-dev]
 dev = [
     { name = "build", specifier = ">=1.4.4" },
+    { name = "magic-base", editable = "." },
     { name = "twine", specifier = ">=6.2.0" },
 ]
 

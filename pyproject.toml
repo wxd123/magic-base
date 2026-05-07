@@ -43,5 +43,14 @@ Repository = "https://github.com/wxd123/magic-base.git"
 [dependency-groups]
 dev = [
     "build>=1.4.4",
+    "magic-base",
     "twine>=6.2.0",
 ]
+
+[tool.uv.workspace]
+members = [
+    ".",
+]
+
+[tool.uv.sources]
+magic-base = { workspace = true, editable = true }

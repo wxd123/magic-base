@@ -52,6 +52,15 @@ class DatabaseConfigBase(ABC):
         """
         pass
 
+    @abstractmethod
+    def get_db_path(self) -> str:
+        """获取数据库文件路径(仅限于sqlite)
+        
+        返回 sqlite数据库文件路径。        
+        
+        """
+        pass
+
 
 class MagicDatabaseConfig(DatabaseConfigBase):
     """
@@ -70,6 +79,8 @@ class MagicDatabaseConfig(DatabaseConfigBase):
     MAGIC_DATA_DIR = Path.home() / "magic" / "data"
     """Magic 默认数据目录，路径为 ~/magic/data"""
     
+    # 数据库路径
+    db_path = None
     def __init__(
         self, 
         db_type: DatabaseType = DatabaseType.SQLITE,

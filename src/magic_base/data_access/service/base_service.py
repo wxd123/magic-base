@@ -86,6 +86,11 @@ class BaseService(ABC, Generic[T]):
         """更新记录"""
         return self._repo.update(record_id, **kwargs)
     
+    def batch_create(self, models: List[Dict[str, str]]) -> int:
+        """批量创建"""            
+        
+        return self._repo.batch_create_from_dict(models)
+    
     def batch_update(self, updates: Dict[int, Dict]) -> int:
         """批量更新"""
         return self._repo.batch_update(updates)

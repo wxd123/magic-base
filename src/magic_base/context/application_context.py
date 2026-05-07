@@ -1,7 +1,7 @@
 # magic_base/core/context.py
 
 import threading
-from typing import Optional, Generic, TypeVar
+from typing import Optional, Generic, TypeVar, Dict
 
 from magic_base.data_access.config.base_database_config import DatabaseConfigBase
 from magic_base.data_access.manager.base_database_manager import DatabaseManagerBase
@@ -54,12 +54,14 @@ class ApplicationContext(Generic[ContextType]):
     db_manager: Optional[DatabaseManagerBase] = None
     """数据库管理器对象，可选，未设置时为None"""
     
-    # 项目特定上下文（泛型）
-    context: Optional[ContextType] = None
+    
+    # 业务上下文字典（按 key 存储）
+    _contexts: Dict[str, ContextType] = {}
     """项目特定上下文对象，类型由泛型参数ContextType决定，未设置时为None"""
     
     @classmethod
     def initialize(cls, 
+                   project_name: str,
                    db_config: Optional[DatabaseConfigBase] = None,
                    db_manager: Optional[DatabaseManagerBase] = None,
                    context: Optional[ContextType] = None):
@@ -69,6 +71,7 @@ class ApplicationContext(Generic[ContextType]):
         未传入的参数对应的属性将保持原值不变（如果之前已设置）或保持为None。
         
         参数:
+            project_name: 项目名称，用于区分各个模块的自定义上下文
             db_config: 数据库配置对象，可选，如果提供则替换现有的db_config
             db_manager: 数据库管理器对象，可选，如果提供则替换现有的db_manager
             context: 项目特定的上下文对象，可选，如果提供则替换现有的context
@@ -88,12 +91,12 @@ class ApplicationContext(Generic[ContextType]):
             )
         """
         with cls._lock:
-            if db_config is not None:
+            if db_config is not None and cls.db_config is None:
                 cls.db_config = db_config
-            if db_manager is not None:
+            if db_manager is not None and cls.db_manager is None:
                 cls.db_manager = db_manager
-            if context is not None:
-                cls.context = context
+            if project_name is not None and context is not None:
+                cls._contexts[project_name] = context
 
         #   cls._create_tables_if_not_exists()
 
@@ -127,7 +130,7 @@ class ApplicationContext(Generic[ContextType]):
         return cls.db_manager
     
     @classmethod
-    def get_context(cls) -> ContextType:
+    def get_context(cls,project_name: str) -> ContextType:
         """获取项目特定的上下文
         
         返回:
@@ -140,9 +143,9 @@ class ApplicationContext(Generic[ContextType]):
             ctx = ApplicationContext[MyContext].get_context()
             print(ctx.user_id)  # 类型安全，IDE可提供代码补全
         """
-        if cls.context is None:
+        if cls._contexts is None:
             raise RuntimeError("Context not initialized")
-        return cls.context
+        return cls._contexts[project_name]
     
     @classmethod
     def reset(cls):
@@ -164,7 +167,7 @@ class ApplicationContext(Generic[ContextType]):
         with cls._lock:
             cls.db_config = None
             cls.db_manager = None
-            cls.context = None
+            cls._contexts = None
 
 
 __all__ = ['ApplicationContext']

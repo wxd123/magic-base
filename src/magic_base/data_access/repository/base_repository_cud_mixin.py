@@ -75,6 +75,7 @@ class CUDRepositoryMixin(RepositoryCoreMixin[T]):
             session.add(instance)
             session.flush()
             session.refresh(instance)  # 刷新获取自增 ID
+            session.expunge(instance)  # ← 添加这行，在返回前从会话中分离
             return instance
     
     def create_from_model(self, model: T) -> T:
@@ -275,6 +276,26 @@ class CUDRepositoryMixin(RepositoryCoreMixin[T]):
             session.flush()
             session.commit()
             return models
+        
+    def batch_create_from_dict(self, models_data: List[Dict[str, str]]) -> int:
+        """从字典格式批量创建"""
+        if not models_data:
+            return 0
+        
+        # print("First record keys:", models_data[0].keys())
+        # print("created_at type:", type(models_data[0].get('created_at')))
+        # print("updated_at type:", type(models_data[0].get('updated_at')))
+        # print("updated_at value:", models_data[0].get('updated_at'))
+        with self._get_session() as session:
+            instances = []
+            for item in models_data:                
+                instance = self._model_class(**item)                    
+                instances.append(instance)
+            
+            session.bulk_save_objects(instances)
+            session.flush()
+            session.commit()
+            return len(instances)
     
     def batch_update(self, updates: Dict[int, Dict[str, Any]]) -> int:
         """批量更新（ORM）

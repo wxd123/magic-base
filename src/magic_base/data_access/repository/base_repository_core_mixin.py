@@ -146,8 +146,8 @@ class RepositoryCoreMixin(Generic[T]):
         返回:
             Session: 数据库会话对象
         """
-        if self._session is None:
-            self._session = ApplicationContext.get_db_manager().session()
+        #if self._session is None:
+        self._session = ApplicationContext.get_db_manager().session()
         return self._session
     
     @property

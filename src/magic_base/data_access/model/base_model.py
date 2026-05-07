@@ -5,7 +5,7 @@ ORM 基类 - 所有数据模型继承此基类
 
 
 import datetime
-from typing import Any, Dict, Optional, TypeVar
+from typing import Any, Dict, TypeVar
 
 from sqlalchemy import Boolean, Column, DateTime, Integer, func
 from sqlalchemy.orm import declarative_base
@@ -237,51 +237,5 @@ class MagicBaseModel(Base):
     deleted_at = Column(DateTime, nullable=True)
     """软删除时间戳，非空表示已删除，用于实现软删除功能"""
     
-    # ==================== ORM 实例方法 ====================
-    
-    def to_dict(self) -> Dict[str, Any]:
-        """
-        将模型实例转换为字典
-        
-        重写 BaseModel.to_dict 方法，使用 SQLAlchemy 的表列信息来生成字典。
-        自动处理日期时间类型的转换，将其格式化为 ISO 格式字符串。
-        
-        返回:
-            Dict[str, Any]: 模型数据字典，键为列名，值为列值
-            
-        Example:
-            user = session.query(User).first()
-            user_dict = user.to_dict()
-            # {
-            #     'id': 1,
-            #     'username': 'alice',
-            #     'created_at': '2024-01-01T12:00:00',
-            #     ...
-            # }
-        """
-        result = {}
-        for column in self.__table__.columns:
-            value = getattr(self, column.name)
-            # 处理日期时间类型
-            if isinstance(value, datetime):
-                value = value.isoformat()
-            result[column.name] = value
-        return result
     
     
-    
-    def __repr__(self) -> str:
-        """
-        字符串表示
-        
-        返回简洁的字符串表示，格式为 "<ClassName(id=123)>"
-        主要用于调试和日志输出。
-        
-        返回:
-            str: 模型的字符串表示
-            
-        Example:
-            user = User(id=1, username="alice")
-            print(user)  # <User(id=1)>
-        """
-        return f"<{self.__class__.__name__}(id={self.id})>"

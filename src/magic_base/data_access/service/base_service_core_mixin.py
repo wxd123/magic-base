@@ -3,10 +3,9 @@
 Service 基类 - 定义业务层接口
 """
 
-from abc import ABC, abstractmethod
-from typing import Generic, TypeVar, Optional, List, Dict, Any
-from magic_base.data_access.repository.base_repository_cud_mixin import CUDRepositoryMixin
-from magic_base.data_access.repository.base_repository_query_mixin import QueryRepositoryMixin
+from abc import abstractmethod
+from typing import Generic, TypeVar,  Dict, Any
+
 
 
 T = TypeVar('T')  # 业务对象类型

@@ -7,12 +7,13 @@ from magic_base.data_access.model.base_model import Base, BaseModel, MagicBaseMo
 from magic_base.data_access.repository.base_repository import BaseRepository, MagicBaseRepository
 from magic_base.data_access.service.base_service import BaseService, MagicBaseService
 from magic_base.context.application_context import ApplicationContext
-
+from magic_base.utils.base_csv_validator import CSVValidator
 __all__ = [
     'ApplicationContext', 
     'ConfigBase', 'DatabaseConfigBase', 'MagicDatabaseConfig',
     'DatabaseManagerBase', 'MagicDatabaseManager',
     'Base', 'BaseModel', 'MagicBaseModel', 
     'BaseRepository', 'MagicBaseRepository',
-    'BaseService', 'MagicBaseService'
-          ]
+    'BaseService', 'MagicBaseService',
+    'CSVValidator'
+]
