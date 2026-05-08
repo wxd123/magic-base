@@ -8,3 +8,7 @@ python -m build
 twine check dist/*
 
 # 上传
+twine upload dist/*
+
+# 清理build文件
+find . -type d -name "*.egg-info" -exec rm -rf {} + 2>/dev/null
