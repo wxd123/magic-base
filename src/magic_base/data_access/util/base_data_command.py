@@ -6,7 +6,6 @@
 
 import csv
 from pathlib import Path
-import pandas as pd
 import traceback
 from typing import Dict, Any, Optional, Callable, Tuple, List
 from abc import ABC, abstractmethod
