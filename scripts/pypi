@@ -1,0 +1,10 @@
+# 上传pypi工具安装
+uv add build twine --dev
+
+# 打包
+python -m build
+
+# 上传前检测
+twine check dist/*
+
+# 上传
