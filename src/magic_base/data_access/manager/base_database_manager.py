@@ -7,10 +7,10 @@ from typing import Generator, Optional
 from sqlalchemy import create_engine, Engine
 from sqlalchemy.orm import sessionmaker, Session
 
-from magic_base.data_access.config.base_database_config import DatabaseConfigBase, MagicDatabaseConfig
+from magic_base.data_access.config.base_database_config import BaseDatabaseConfig, MagicDatabaseConfig
 
 
-class DatabaseManagerBase(ABC):
+class BaseDatabaseManager(ABC):
     """
     数据库管理器基类
     
@@ -45,12 +45,12 @@ class DatabaseManagerBase(ABC):
             session.close()
     """
     
-    def __init__(self, config: DatabaseConfigBase):
+    def __init__(self, config: BaseDatabaseConfig):
         """
         初始化数据库管理器
         
         参数:
-            config: 数据库配置对象，必须继承自 DatabaseConfigBase
+            config: 数据库配置对象，必须继承自 BaseDatabaseConfig
         """
         self._config = config
         """数据库配置对象"""
@@ -171,7 +171,7 @@ class DatabaseManagerBase(ABC):
         支持 with 语句，返回自身实例。
         
         返回:
-            DatabaseManagerBase: 管理器实例
+            BaseDatabaseManager: 管理器实例
         """
         return self
     
@@ -209,7 +209,7 @@ class DatabaseManagerBase(ABC):
         pass
 
 
-class MagicDatabaseManager(DatabaseManagerBase):
+class MagicDatabaseManager(BaseDatabaseManager):
     """
     共享数据库管理器
     

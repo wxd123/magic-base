@@ -7,7 +7,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional
 
 
-class ConfigBase(ABC):
+class BaseConfig(ABC):
     """配置管理基类"""
     
     @abstractmethod

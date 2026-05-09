@@ -22,7 +22,7 @@ class DatabaseType(Enum):
     MYSQL = "mysql"
 
 
-class DatabaseConfigBase(ABC):
+class BaseDatabaseConfig(ABC):
     """数据库配置抽象基类
     
     定义了数据库配置的标准接口，所有具体数据库配置类都应继承此类。
@@ -62,7 +62,7 @@ class DatabaseConfigBase(ABC):
         pass
 
 
-class MagicDatabaseConfig(DatabaseConfigBase):
+class MagicDatabaseConfig(BaseDatabaseConfig):
     """
     Magic 系列统一数据库配置
     

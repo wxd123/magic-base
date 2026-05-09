@@ -1,20 +1,20 @@
-# magic_base/data_access/model/base_model.py
+# magic_base/data_access/model/base_entity.py
 """
 ORM 基类 - 所有数据模型继承此基类
 """
 
 
-import datetime
+
 from typing import Any, Dict, TypeVar
 
 from sqlalchemy import Boolean, Column, DateTime, Integer, func
 from sqlalchemy.orm import declarative_base
 
 
-T = TypeVar('T', bound='BaseModel')
+T = TypeVar('T', bound='BaseEntity')
 
 
-class BaseModel():
+class BaseEntity():
     """
     ORM 模型抽象基类
     
@@ -181,9 +181,9 @@ class BaseModel():
     
 
 # 创建基础模型类
-Base = declarative_base(cls=BaseModel)
+Base = declarative_base(cls=BaseEntity)
 
-class MagicBaseModel(Base):
+class MagicBaseEntity(Base):
     """
     所有 ORM 模型的抽象基类
     

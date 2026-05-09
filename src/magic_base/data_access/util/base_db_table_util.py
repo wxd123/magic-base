@@ -7,7 +7,7 @@ from pathlib import Path
 from sqlalchemy import create_engine, Engine, text
 import sqlite3
 
-from magic_base import MagicBaseModel
+from magic_base import MagicBaseEntity
 from magic_base.context.application_context import ApplicationContext
 from magic_base.constants.tables import SCHEMA_VERSION_TABLE
 
@@ -38,7 +38,7 @@ class DBModelUtil:
         )    
         
     @staticmethod
-    def create_tables_entities(models: List[Type[MagicBaseModel]] = None, check_first: bool = True) -> None:
+    def create_tables_entities(models: List[Type[MagicBaseEntity]] = None, check_first: bool = True) -> None:
         """
         通过实体类列表创建对应的表（静态方法版本）
         
@@ -51,8 +51,8 @@ class DBModelUtil:
         engine: Engine = DBModelUtil._get_engine()
                 
         if not models:
-            # 获取所有 MagicBaseModel 的子类
-            models = MagicBaseModel.__subclasses__()
+            # 获取所有 MagicBaseEntity 的子类
+            models = MagicBaseEntity.__subclasses__()
             if not models:
                 print("❌ 没有找到任何实体类")
                 return
@@ -116,7 +116,7 @@ class DBModelUtil:
             return
         
         engine: Engine = DBModelUtil._get_engine()
-        MagicBaseModel.metadata.drop_all(engine)
+        MagicBaseEntity.metadata.drop_all(engine)
         print("✅ 所有表已删除")
     
     @staticmethod
@@ -138,7 +138,7 @@ class DBModelUtil:
                 return 0
     
     @staticmethod
-    def drop_tables_entities(models: List[Type[MagicBaseModel]] = None) -> None:
+    def drop_tables_entities(models: List[Type[MagicBaseEntity]] = None) -> None:
         """
         通过实体类列表删除对应的表
         

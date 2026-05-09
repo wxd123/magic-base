@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import List, Optional, Callable, Type
 from datetime import datetime
 
-from magic_base.data_access.model.base_model import MagicBaseModel
+from magic_base import MagicBaseEntity
 from magic_base.data_access.util.base_db_table_util import DBModelUtil
 from magic_base.context.application_context import ApplicationContext
 
@@ -146,7 +146,7 @@ class DBUtil:
             print(f"❌ 目录准备失败: {e}")
             return False
     
-    def create_tables(self, models: Optional[List[Type[MagicBaseModel]]] = None) -> bool:
+    def create_tables(self, models: Optional[List[Type[MagicBaseEntity]]] = None) -> bool:
         """创建表结构"""
         print("\n" + "=" * 60)
         print("创建数据库表结构")
@@ -162,7 +162,7 @@ class DBUtil:
             print(f"❌ 表结构创建失败: {e}")
             return False
         
-    def drop_tables(self, models: Optional[List[Type[MagicBaseModel]]] = None) -> bool:
+    def drop_tables(self, models: Optional[List[Type[MagicBaseEntity]]] = None) -> bool:
         """删除表结构"""
         print("\n" + "=" * 60)
         print("删除数据库表结构")
@@ -178,7 +178,7 @@ class DBUtil:
             print(f"❌ 表结构删除失败: {e}")
             return False
     
-    def recreate_tables(self, models: Optional[List[Type[MagicBaseModel]]] = None, backup: bool = True) -> bool:
+    def recreate_tables(self, models: Optional[List[Type[MagicBaseEntity]]] = None, backup: bool = True) -> bool:
         """
         删除并重建所有表结构
         

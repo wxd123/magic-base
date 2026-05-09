@@ -3,8 +3,8 @@
 import threading
 from typing import Optional, Generic, TypeVar, Dict
 
-from magic_base.data_access.config.base_database_config import DatabaseConfigBase
-from magic_base.data_access.manager.base_database_manager import DatabaseManagerBase
+from magic_base.data_access.config.base_database_config import BaseDatabaseConfig
+from magic_base.data_access.manager.base_database_manager import BaseDatabaseManager
 
 
 # 定义泛型变量
@@ -25,7 +25,7 @@ class ApplicationContext(Generic[ContextType]):
         _lock: 线程锁，用于保证初始化与重置操作的原子性
         db_config: 数据库配置对象，用于存储数据库连接参数
         db_manager: 数据库管理器对象，用于执行数据库操作
-        context: 项目特定的上下文对象，类型由泛型参数ContextType决定
+        _contexts: 项目特定的上下文对象，类型由泛型参数ContextType决定
     
     使用示例:
         # 定义项目特定上下文类
@@ -48,10 +48,10 @@ class ApplicationContext(Generic[ContextType]):
     _lock = threading.Lock()
     
     # 共享属性（所有项目都需要）
-    db_config: Optional[DatabaseConfigBase] = None
+    db_config: Optional[BaseDatabaseConfig] = None
     """数据库配置对象，可选，未设置时为None"""
     
-    db_manager: Optional[DatabaseManagerBase] = None
+    db_manager: Optional[BaseDatabaseManager] = None
     """数据库管理器对象，可选，未设置时为None"""
     
     
@@ -62,8 +62,8 @@ class ApplicationContext(Generic[ContextType]):
     @classmethod
     def initialize(cls, 
                    project_name: str,
-                   db_config: Optional[DatabaseConfigBase] = None,
-                   db_manager: Optional[DatabaseManagerBase] = None,
+                   db_config: Optional[BaseDatabaseConfig] = None,
+                   db_manager: Optional[BaseDatabaseManager] = None,
                    context: Optional[ContextType] = None):
         """初始化全局上下文
         
@@ -96,27 +96,14 @@ class ApplicationContext(Generic[ContextType]):
             if db_manager is not None and cls.db_manager is None:
                 cls.db_manager = db_manager
             if project_name is not None and context is not None:
-                cls._contexts[project_name] = context
-
-        #   cls._create_tables_if_not_exists()
+                cls._contexts[project_name] = context    
 
     @classmethod
-    def _create_tables_if_not_exists(cls):
-        """自动创建所有定义的表"""
-        try:
-            from magic_base import Base
-            engine = cls.db_manager.engine
-            Base.metadata.create_all(engine)  # 幂等操作，表已存在时不会重复创建
-            print("✅ 数据库表结构已就绪")
-        except Exception as e:
-            print(f"⚠️ 建表失败（不影响核心功能）: {e}")
-
-    @classmethod
-    def get_db_manager(cls) -> DatabaseManagerBase:
+    def get_db_manager(cls) -> BaseDatabaseManager:
         """获取数据库管理器实例
         
         返回:
-            DatabaseManagerBase: 已初始化的数据库管理器对象
+            BaseDatabaseManager: 已初始化的数据库管理器对象
         
         异常:
             RuntimeError: 当db_manager尚未初始化（为None）时抛出
