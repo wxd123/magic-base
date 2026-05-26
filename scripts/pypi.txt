@@ -2,7 +2,11 @@
 uv add build twine --dev
 
 # 打包
-python -m build
+# python -m build
+
+# uv 打包，避免本地路径引用
+uv build --no-sources
+
 
 # 上传前检测
 twine check dist/*
