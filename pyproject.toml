@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "magic-base"
-version = "0.1.1"
+version = "0.1.2"
 description = "Magic 平台公共基类库 - 提供统一的抽象基类和核心接口"
 readme = "README.md"
 authors = [{name = "wxd123"}]
