@@ -77,7 +77,7 @@ class Result(Generic[T]):
     
     Attributes:
         status: 执行状态，决定 success/error/pending
-        request_id: 全链路请求ID，用于追踪和日志关联
+        
         output: 成功时的输出数据，类型由泛型 T 决定
         error_code: 失败时的错误码，用于程序化处理
         error_message: 失败时的错误描述，用于日志和展示
@@ -87,7 +87,7 @@ class Result(Generic[T]):
     Example:
         >>> # 成功结果
         >>> result = Result.success(
-        ...     request_id="req_123",
+        
         ...     output={"patient_id": "456", "score": 95}
         ... )
         >>> result.is_success
@@ -96,8 +96,7 @@ class Result(Generic[T]):
         '456'
         
         >>> # 失败结果
-        >>> result = Result.error(
-        ...     request_id="req_123",
+        >>> result = Result.error(                
         ...     error_code="AGENT_TIMEOUT",
         ...     error_message="Agent execution exceeded 30s limit"
         ... )
@@ -116,10 +115,8 @@ class Result(Generic[T]):
         ...     print(patient.name)
     """
     status: ResultStatus
-    """执行状态"""
+    """执行状态"""   
     
-    request_id: str
-    """全链路请求ID，用于追踪和日志关联"""
     
     output: Optional[T] = None
     """成功时的输出数据，类型由泛型 T 决定"""
@@ -157,14 +154,12 @@ class Result(Generic[T]):
             
         Example:
             >>> result = Result.success(
-            ...     request_id="req_123",
             ...     output={"key": "value"},
             ...     metadata={"duration_ms": 150}
             ... )
             >>> result.to_dict()
             {
                 "status": "success",
-                "request_id": "req_123",
                 "timestamp": "2025-01-01T00:00:00",
                 "output": {"key": "value"},
                 "metadata": {"duration_ms": 150}
@@ -172,7 +167,6 @@ class Result(Generic[T]):
         """
         result = {
             "status": self.status.value,
-            "request_id": self.request_id,
             "timestamp": self.timestamp.isoformat()
         }
         
@@ -205,9 +199,9 @@ class Result(Generic[T]):
             str: JSON格式的字符串
             
         Example:
-            >>> result = Result.success(request_id="req_123", output="ok")
+            >>> result = Result.success( output="ok")
             >>> result.to_json()
-            '{"status": "success", "request_id": "req_123", "timestamp": "2025-01-01T00:00:00", "output": "ok"}'
+            '{"status": "success", "timestamp": "2025-01-01T00:00:00", "output": "ok"}'
         """
         import json
         return json.dumps(self.to_dict(), default=str, ensure_ascii=False)
@@ -233,12 +227,11 @@ class Result(Generic[T]):
         return self.status == ResultStatus.ERROR
     
     @classmethod
-    def success(cls, request_id: str, output: T, **kwargs) -> 'Result[T]':
+    def success(cls, output: T, **kwargs) -> 'Result[T]':
         """
         创建成功结果
         
         Args:
-            request_id: 全链路请求ID（必填）
             output: 成功时的输出数据，类型为 T
             **kwargs: 其他字段（metadata 等）
             
@@ -247,25 +240,22 @@ class Result(Generic[T]):
             
         Example:
             >>> result = Result.success(
-            ...     request_id="req_123",
             ...     output={"patient_id": "456"},
             ...     metadata={"duration_ms": 150}
             ... )
         """
         return cls(
             status=ResultStatus.SUCCESS,
-            request_id=request_id,
             output=output,
             **kwargs
         )
     
     @classmethod
-    def error(cls, request_id: str, error_code: str, error_message: str, **kwargs) -> 'Result[Any]':
+    def error(cls, error_code: str, error_message: str, **kwargs) -> 'Result[Any]':
         """
         创建失败结果
         
         Args:
-            request_id: 全链路请求ID（必填）
             error_code: 错误码，用于程序化处理
             error_message: 错误描述，用于日志和展示
             **kwargs: 其他字段（metadata 等）
@@ -275,7 +265,6 @@ class Result(Generic[T]):
             
         Example:
             >>> result = Result.error(
-            ...     request_id="req_123",
             ...     error_code="AGENT_TIMEOUT",
             ...     error_message="执行超时",
             ...     metadata={"timeout_seconds": 30}
@@ -283,7 +272,6 @@ class Result(Generic[T]):
         """
         return cls(
             status=ResultStatus.ERROR,
-            request_id=request_id,
             error_code=error_code,
             error_message=error_message,
             **kwargs
