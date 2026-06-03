@@ -50,10 +50,10 @@ def llm_generate(
     use_cache = cache if cache is not None else CACHE_ENABLED
     
     # 缓存键（包含所有影响结果的参数）
-    if use_cache:
-        cache_key = f"{model}|{temperature}|{max_tokens}|{prompt}|{system}"
-        if cache_key in _cache:
-            return _cache[cache_key]
+    # if use_cache:
+    #     cache_key = f"{model}|{temperature}|{max_tokens}|{prompt}|{system}"
+    #     if cache_key in _cache:
+    #         return _cache[cache_key]
     
     # 构造请求（兼容 Ollama API，也支持 OpenAI 格式）
     url = f"{base_url.rstrip('/')}/api/generate"
@@ -70,6 +70,9 @@ def llm_generate(
         payload["system"] = system
     
     try:
+        # print(f"Sending request to model: {model} with prompt length {len(prompt)}")
+        # print(f"Request payload: {payload}")
+        # print(f"Model service URL: {url}")
         resp = requests.post(url, json=payload, timeout=timeout)
         resp.raise_for_status()
         result = resp.json().get("response", "").strip()
