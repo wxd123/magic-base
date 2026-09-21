@@ -1,3 +1,4 @@
+# magic_base/protocol/result/result.py
 """
 统一结果信封模块
 

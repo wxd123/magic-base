@@ -4,6 +4,7 @@ from magic_base.config.base_config import BaseConfig
 from magic_base.data_access.config.base_database_config import BaseDatabaseConfig, MagicDatabaseConfig
 from magic_base.data_access.manager.base_database_manager import BaseDatabaseManager, MagicDatabaseManager
 from magic_base.data_access.model.base_entity import Base, BaseEntity, MagicBaseEntity
+from magic_base.data_access.model.base_dataclass import BaseDataClass
 from magic_base.data_access.repository.base_repository import BaseRepository, MagicBaseRepository
 from magic_base.data_access.service.base_service import BaseService, MagicBaseService
 from magic_base.context.application_context import ApplicationContext
@@ -13,6 +14,7 @@ __all__ = [
     'BaseConfig', 'BaseDatabaseConfig', 'MagicDatabaseConfig',
     'BaseDatabaseManager', 'MagicDatabaseManager',
     'Base', 'BaseEntity', 'MagicBaseEntity', 
+    'BaseDataClass',
     'BaseRepository', 'MagicBaseRepository',
     'BaseService', 'MagicBaseService',
     'CSVValidator'

@@ -46,6 +46,10 @@ class BaseService(ABC, Generic[T]):
         """创建记录"""
         return self._repo.create(**kwargs)
     
+    def create_from_model(self, model: T) -> T:
+        """创建记录"""
+        return self._repo.create_from_model(model)
+    
     # ==================== Read 操作 ====================
     
     def get_by_id(self, record_id: int) -> Optional[Dict]:
