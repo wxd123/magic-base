@@ -33,5 +33,12 @@ uv add pytest pytest-cov --dev
 git config --global http.https://github.com.proxy http://127.0.0.1:7897
 
 
+# 清理python缓存
+find . -name "*.pyc" -delete
+find . -name "__pycache__" -type d -exec rm -rf {} +
+find . -name "*.pyo" -delete
+find . -name "*.pyd" -delete
+
+
 
 
