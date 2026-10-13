@@ -16,6 +16,9 @@ uv sync
 # uv 导出 requirements.txt
 uv pip compile pyproject.toml -o requirements.txt --no-sources
 
+# uv 安装项目到本地python环境
+uv add --editable . --dev
+
 
 ## 发布工具
 # 上传pypi工具安装
