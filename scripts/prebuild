@@ -34,11 +34,19 @@ git config --global http.https://github.com.proxy http://127.0.0.1:7897
 
 
 # 清理python缓存
+# python 3.5+
+python -c "import pathlib, shutil; [shutil.rmtree(p) for p in pathlib.Path('.').rglob('__pycache__')]"
+
+
+# linux 下执行
 find . -name "*.pyc" -delete
 find . -name "__pycache__" -type d -exec rm -rf {} +
 find . -name "*.pyo" -delete
 find . -name "*.pyd" -delete
 
+# powershell 下执行
+Get-ChildItem -Recurse -Force -Directory -Filter __pycache__ | Remove-Item -Recurse -Force
+Get-ChildItem -Recurse -Force -File -Include *.pyc,*.pyo,*.pyd | Remove-Item -Force
 
 
 

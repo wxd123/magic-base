@@ -5,8 +5,8 @@ from typing import Dict, List, Optional, TypeVar, Generic, Type, Any, get_origin
 from sqlalchemy.orm import Session
 from sqlalchemy import inspect, text
 
-from .base_repository_cud_mixin import CUDRepositoryMixin
-from .base_repository_query_mixin import QueryRepositoryMixin
+from .mixin.base_repository_cud_mixin import CUDRepositoryMixin
+from .mixin.base_repository_query_mixin import QueryRepositoryMixin
 
 
 T = TypeVar('T')
