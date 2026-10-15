@@ -137,7 +137,7 @@ class CUDRepositoryMixin(RepositoryCoreMixin[T]):
             不会更新未在 kwargs 中指定的字段，保持原有值不变。
         """
         with self._get_session() as session:
-            instance = session.query(self._model_class).get(record_id)
+            instance = session.get(self._model_class, record_id)   # ← 修复
             if not instance:
                 return False
             
@@ -223,7 +223,7 @@ class CUDRepositoryMixin(RepositoryCoreMixin[T]):
             repo.delete(1, soft=True, active_field='enabled')
         """
         with self._get_session() as session:
-            instance = session.query(self._model_class).get(record_id)
+            instance = session.get(self._model_class, record_id)   # ← 修复
             if not instance:
                 return False
             
@@ -282,10 +282,6 @@ class CUDRepositoryMixin(RepositoryCoreMixin[T]):
         if not models_data:
             return 0
         
-        # print("First record keys:", models_data[0].keys())
-        # print("created_at type:", type(models_data[0].get('created_at')))
-        # print("updated_at type:", type(models_data[0].get('updated_at')))
-        # print("updated_at value:", models_data[0].get('updated_at'))
         with self._get_session() as session:
             instances = []
             for item in models_data:                
@@ -327,7 +323,7 @@ class CUDRepositoryMixin(RepositoryCoreMixin[T]):
         updated = 0
         with self._get_session() as session:
             for record_id, fields in updates.items():
-                instance = session.query(self._model_class).get(record_id)
+                instance = session.get(self._model_class, record_id)   # ← 修复
                 if instance:
                     for key, value in fields.items():
                         if hasattr(instance, key):
@@ -370,4 +366,4 @@ class CUDRepositoryMixin(RepositoryCoreMixin[T]):
             - 需要 ORM 的懒加载特性
         """
         with self._get_session() as session:
-            return session.query(self._model_class).get(record_id)
+            return session.get(self._model_class, record_id)   # ← 修复
