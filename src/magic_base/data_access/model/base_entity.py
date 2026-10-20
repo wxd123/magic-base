@@ -7,7 +7,7 @@ ORM 基类 - 所有数据模型继承此基类
 
 from typing import Any, Dict, TypeVar
 
-from sqlalchemy import Boolean, Column, DateTime, Integer, func
+from sqlalchemy import Boolean, Column, DateTime, Integer, Text, func
 from sqlalchemy.orm import declarative_base
 
 
@@ -236,6 +236,6 @@ class MagicBaseEntity(Base):
     # 可选：软删除字段
     deleted_at = Column(DateTime, nullable=True)
     """软删除时间戳，非空表示已删除，用于实现软删除功能"""
-    
+    description = Column(Text, nullable=True) 
     
     
