@@ -146,9 +146,12 @@ class RepositoryCoreMixin(Generic[T]):
         返回:
             Session: 数据库会话对象
         """
-        #if self._session is None:
-        self._session = ApplicationContext.get_db_manager().session()
-        return self._session
+        # #if self._session is None:
+        # self._session = ApplicationContext.get_db_manager().session()
+        # return self._session
+        if self._session is not None:      # 注入的 Session
+            return self._wrap(self._session)   # 包成 commit-on-exit 的 contextmanager
+        return ApplicationContext.get_db_manager().session()   # 全局
     
     @property
     def session(self) -> Session:
