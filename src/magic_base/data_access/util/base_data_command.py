@@ -2,7 +2,7 @@
    
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# magic_base/data_access/util/data_commands.py
+# magic_base/data_access/util/base_data_commands.py
 
 import csv
 from pathlib import Path

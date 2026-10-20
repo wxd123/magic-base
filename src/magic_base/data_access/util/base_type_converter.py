@@ -62,10 +62,26 @@ class TypeConverter:
         Returns:
             包含基类字段的字典
         """
-        base_fields = {
-            'is_active': TypeConverter.to_bool(row.get('is_active'), default=True)
-        }
-        
+        base_fields = {}
+
+        # id：显式 id（CSV 有值则提取）
+        raw_id = row.get('id')
+        if raw_id is not None and str(raw_id).strip() != "":
+            try:
+                base_fields['id'] = int(float(str(raw_id).strip()))
+            except (ValueError, TypeError):
+                pass  # 非法 id 忽略，走自增
+
+        # is_active
+        base_fields['is_active'] = TypeConverter.to_bool(row.get('is_active'), default=True)
+
+        # description：可空，原样提取（去首尾空格）
+        desc = row.get('description')
+        if desc is not None:
+            desc_str = str(desc).strip()
+            if desc_str:
+                base_fields['description'] = desc_str
+                
         # 时间字段 - 转换为 datetime 对象
         created_at = TypeConverter.parse_datetime(row.get('created_at'))
         updated_at = TypeConverter.parse_datetime(row.get('updated_at'))
