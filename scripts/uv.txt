@@ -9,6 +9,12 @@ python -m python_docstring_markdown ./src/magic_base ./docs/api-base.md
 # 安装测试工具
 uv add pytest pytest-cov --dev
 
+# 执行测试
+pytest tests/core/dimension
+
+# 测试覆盖率
+pytest tests/core/dimension --cov=src/magic_ast/core/dimension --cov-report=term-missing
+
 ## 同步工具
 # uv.lock同步
 uv sync
